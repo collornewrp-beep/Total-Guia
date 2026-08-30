@@ -2668,6 +2668,36 @@ setTimeout(()=>{
 },15000);
 
 /* ---------------- PWA: registra o service worker (deixa o app instalável) ---------------- */
+/* ---------------- botão "voltar" do Android: fica dentro do app ---------------- */
+let _backExitArmed = false, _backExitTimer = null;
+history.pushState({app:true}, '');
+window.addEventListener('popstate', function(){
+  const modalRoot = document.getElementById('modalRoot');
+  if(modalRoot && modalRoot.innerHTML.trim() !== ''){
+    modalRoot.innerHTML = '';
+    history.pushState({app:true}, '');
+    return;
+  }
+  if(state.pedidoAberto){
+    state.pedidoAberto = null; render();
+    history.pushState({app:true}, '');
+    return;
+  }
+  if(state.tab !== 'inicio'){
+    state.tab = 'inicio';
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active', x.dataset.tab==='inicio'));
+    render();
+    history.pushState({app:true}, '');
+    return;
+  }
+  if(_backExitArmed) return; // segundo toque: deixa sair de verdade
+  _backExitArmed = true;
+  toast('Toque voltar de novo para sair do app');
+  history.pushState({app:true}, '');
+  clearTimeout(_backExitTimer);
+  _backExitTimer = setTimeout(()=>{ _backExitArmed = false; }, 2000);
+});
+
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(e=>console.error('Falha ao registrar service worker:', e));
